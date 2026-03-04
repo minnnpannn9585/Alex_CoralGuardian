@@ -10,12 +10,10 @@ public class GripController : MonoBehaviour
 
     private void Update()
     {
-        if (turntable == null || turntable.GripPoint == null) return;
 
         // 计算玩家与抓握点的距离
         float dist = Vector2.Distance(transform.position, turntable.GripPoint.position);
-
-        // 空格键切换状态
+        print(dist);
         if (Input.GetKeyDown(KeyCode.Space))
         {
             if (!isGrabbing && dist <= grabDistance)
@@ -37,12 +35,13 @@ public class GripController : MonoBehaviour
             turntable.UpdateRotation(transform.position);
         }
     }
-
+    
     private void TryGrab()
     {
         isGrabbing = true;
-        turntable.StartGrab();
-        Debug.Log("抓稳了，带着我跑！");
+        // 注意这里要把玩家的位置传过去
+        turntable.StartGrab(transform.position); 
+        Debug.Log("抓稳了，保持当前姿势！");
     }
 
     private void TryRelease()

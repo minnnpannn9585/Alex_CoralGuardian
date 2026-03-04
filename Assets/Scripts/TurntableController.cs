@@ -7,59 +7,63 @@ public class TurntableController : MonoBehaviour
     [SerializeField] private Rigidbody2D turntableRb;
     [SerializeField] private float angularDamping = 0.5f;
 
-    public Transform GripPoint { get; private set; } // 外部读取抓握点
-    private bool isBeingGrabbed = false; // 标记当前是否被抓握
+    public Transform GripPoint { get; private set; }
+    private bool isBeingGrabbed = false;
+
+    // 【新增】关键变量：记录抓握瞬间的角度偏移量
+    private float grabAngleOffset;
+
+    private void Awake()
+    {
+        turntableRb = GetComponent<Rigidbody2D>();
+        GripPoint = transform.Find("GripPoint");
+    }
 
     private void Reset()
     {
-        turntableRb = GetComponent<Rigidbody2D>();
-        GripPoint = transform.Find("GripPoint"); // 自动查找子物体
-
+        Awake();
         if (turntableRb != null)
         {
-            // 冻结位置，只允许旋转
             turntableRb.constraints = RigidbodyConstraints2D.FreezePosition;
             turntableRb.angularDrag = angularDamping;
             turntableRb.gravityScale = 0;
         }
     }
 
-    /// <summary>
-    /// 外部调用：开始抓握
-    /// </summary>
-    public void StartGrab()
+    public void StartGrab(Vector2 playerPosition)
     {
         isBeingGrabbed = true;
-        // 抓握时切换为动力学运动，让旋转更跟手
-        turntableRb.isKinematic = true; 
+        turntableRb.isKinematic = true;
+
+        // 【核心修改 1/2】记录抓握瞬间的偏移量
+        // 1. 计算抓握瞬间，玩家相对于转盘的角度
+        Vector2 dirToPlayer = playerPosition - (Vector2)transform.position;
+        float playerAngle = Mathf.Atan2(dirToPlayer.y, dirToPlayer.x) * Mathf.Rad2Deg;
+        
+        // 2. 计算偏移量 = 转盘当前角度 - 玩家当前角度
+        // 这样就能把玩家的位置“映射”到转盘当前的状态上
+        grabAngleOffset = turntableRb.rotation - playerAngle;
     }
 
-    /// <summary>
-    /// 外部调用：结束抓握
-    /// </summary>
     public void EndGrab()
     {
         isBeingGrabbed = false;
-        // 松开时恢复物理，让转盘靠惯性转一会
         turntableRb.isKinematic = false;
     }
 
-    /// <summary>
-    /// 每帧调用：让转盘对准玩家
-    /// </summary>
     public void UpdateRotation(Vector2 playerPosition)
     {
         if (!isBeingGrabbed || turntableRb == null) return;
 
-        // 核心数学逻辑：
-        // 1. 计算从转盘圆心 指向 玩家 的方向
-        Vector2 directionToPlayer = playerPosition - (Vector2)transform.position;
-        
-        // 2. 将方向转换为角度
-        float targetAngle = Mathf.Atan2(directionToPlayer.y, directionToPlayer.x) * Mathf.Rad2Deg;
+        // 【核心修改 2/2】应用偏移量，保持相对方向
+        // 1. 计算玩家现在相对于转盘的角度
+        Vector2 currentDirToPlayer = playerPosition - (Vector2)transform.position;
+        float currentPlayerAngle = Mathf.Atan2(currentDirToPlayer.y, currentDirToPlayer.x) * Mathf.Rad2Deg;
 
-        // 3. 直接设置角度（因为isKinematic=true，所以瞬间对齐，保证三点一线）
-        // 如果你想要一点点延迟感，可以把这里改成 Lerp 插值
+        // 2. 目标角度 = 玩家现在的角度 + 一开始记录的偏移量
+        // 这样无论玩家怎么动，转盘都会保持抓握瞬间的那个“姿势”跟着转
+        float targetAngle = currentPlayerAngle + grabAngleOffset;
+
         turntableRb.MoveRotation(targetAngle);
     }
 }
