@@ -2,21 +2,28 @@ using UnityEngine;
 
 public class GripController : MonoBehaviour
 {
-    [Header("抓握设置")]
-    [SerializeField] private TurntableController turntable; // 拖入转盘
-    [SerializeField] private float grabDistance = 0.8f; // 抓握判定距离（稍微调大一点方便操作）
+    public TurntableController[] turntables;
+    [SerializeField] private float grabDistance = 0.8f;
     
     private bool isGrabbing = false;
+    private float mindist = 5f;
+    private int mindistIndex;
 
     private void Update()
     {
-
-        // 计算玩家与抓握点的距离
-        float dist = Vector2.Distance(transform.position, turntable.GripPoint.position);
-        print(dist);
+        for (int i = 0; i < turntables.Length; i++)
+        {
+            float dist = Vector2.Distance(transform.position, turntables[i].GripPoint.position);
+            if (dist < mindist)
+            {
+                mindist = dist;
+                mindistIndex = i;
+            }
+        }
+        
         if (Input.GetKeyDown(KeyCode.Space))
         {
-            if (!isGrabbing && dist <= grabDistance)
+            if (!isGrabbing && mindist <= grabDistance)
             {
                 TryGrab();
             }
@@ -25,39 +32,27 @@ public class GripController : MonoBehaviour
                 TryRelease();
             }
         }
+
+        mindist = 5f;
     }
 
     private void FixedUpdate()
     {
-        // 如果抓着，就持续告诉转盘：“看我看我看我”
-        if (isGrabbing && turntable != null)
+        if (isGrabbing && turntables[mindistIndex] != null)
         {
-            turntable.UpdateRotation(transform.position);
+            turntables[mindistIndex].UpdateRotation(transform.position);
         }
     }
     
     private void TryGrab()
     {
         isGrabbing = true;
-        // 注意这里要把玩家的位置传过去
-        turntable.StartGrab(transform.position); 
-        Debug.Log("抓稳了，保持当前姿势！");
+        turntables[mindistIndex].StartGrab(transform.position); 
     }
 
     private void TryRelease()
     {
         isGrabbing = false;
-        turntable.EndGrab();
-        Debug.Log("松开咯！");
-    }
-
-    // 调试：在Scene视图里画个圈显示抓握范围
-    private void OnDrawGizmosSelected()
-    {
-        if (turntable != null && turntable.GripPoint != null)
-        {
-            Gizmos.color = Color.cyan;
-            Gizmos.DrawWireSphere(turntable.GripPoint.position, grabDistance);
-        }
+        turntables[mindistIndex].EndGrab();
     }
 }
