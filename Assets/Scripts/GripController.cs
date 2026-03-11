@@ -11,15 +11,19 @@ public class GripController : MonoBehaviour
 
     private void Update()
     {
-        for (int i = 0; i < turntables.Length; i++)
+        if (!isGrabbing)
         {
-            float dist = Vector2.Distance(transform.position, turntables[i].GripPoint.position);
-            if (dist < mindist)
+            for (int i = 0; i < turntables.Length; i++)
             {
-                mindist = dist;
-                mindistIndex = i;
+                float dist = Vector2.Distance(transform.position, turntables[i].GripPoint.position);
+                if (dist < mindist)
+                {
+                    mindist = dist;
+                    mindistIndex = i;
+                }
             }
         }
+        
         
         if (Input.GetKeyDown(KeyCode.Space))
         {
