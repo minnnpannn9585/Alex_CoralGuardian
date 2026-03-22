@@ -7,6 +7,7 @@ TagManager:
   - FishingNet
   - Kelp
   - Cloged
+  - ColdWater
   layers:
   - Default
   - TransparentFX
@@ -14,9 +15,9 @@ TagManager:
   - 
   - Water
   - UI
-  - 
-  - 
-  - 
+  - WhiteReef
+  - Player
+  - ColdWater
   - 
   - 
   - 
@@ -41,6 +42,9 @@ TagManager:
   - 
   - 
   m_SortingLayers:
+  - name: back
+    uniqueID: 3132036149
+    locked: 0
   - name: Default
     uniqueID: 0
     locked: 0

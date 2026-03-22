@@ -1,5 +1,4 @@
-﻿using Unity.VisualScripting;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 
 public class HoldToDestroyCloged : MonoBehaviour
@@ -8,28 +7,13 @@ public class HoldToDestroyCloged : MonoBehaviour
     [SerializeField] private KeyCode holdKey = KeyCode.E;
     [SerializeField] private float holdSeconds = 5f;
 
-    [Header("UI")]
-    [SerializeField] private Slider progressSlider;
-
-    private float holdTimer = 0f;
+    private float holdTimer;
     private Cloged currentCloged;
-
-    private void Awake()
-    {
-        if (progressSlider != null)
-        {
-            progressSlider.minValue = 0f;
-            progressSlider.maxValue = 1f;
-            progressSlider.value = 0f;
-            progressSlider.gameObject.SetActive(false);
-        }
-    }
 
     private void Update()
     {
         if (currentCloged == null)
         {
-            ResetProgressUI();
             return;
         }
 
@@ -42,10 +26,27 @@ public class HoldToDestroyCloged : MonoBehaviour
 
             if (holdTimer >= holdSeconds)
             {
+                // Cache slider reference before destroying object
+                Slider slider = currentCloged.progressSlider;
+                GameObject objectToActivate = currentCloged.objectToActivate;
+
+                // Activate the object if assigned
+                if (objectToActivate != null)
+                {
+                    objectToActivate.SetActive(true);
+                }
+
                 Destroy(currentCloged.gameObject);
+
+                // Hide slider explicitly if it still exists
+                if (slider != null)
+                {
+                    slider.value = 0f;
+                    slider.gameObject.SetActive(false);
+                }
+
                 currentCloged = null;
                 holdTimer = 0f;
-                ResetProgressUI();
             }
         }
         else
@@ -77,30 +78,32 @@ public class HoldToDestroyCloged : MonoBehaviour
 
         if (other.gameObject == currentCloged.gameObject)
         {
+            ResetProgressUI();
             currentCloged = null;
             holdTimer = 0f;
-            ResetProgressUI();
         }
     }
 
     private void SetProgressUI(float normalized01)
     {
-        if (progressSlider == null)
+        if (currentCloged == null || currentCloged.progressSlider == null)
             return;
 
-        if (!progressSlider.gameObject.activeSelf)
-            progressSlider.gameObject.SetActive(true);
+        Slider slider = currentCloged.progressSlider;
+        if (!slider.gameObject.activeSelf)
+            slider.gameObject.SetActive(true);
 
-        progressSlider.value = normalized01;
+        slider.value = normalized01;
     }
 
     private void ResetProgressUI()
     {
-        if (progressSlider == null)
+        if (currentCloged == null || currentCloged.progressSlider == null)
             return;
 
-        progressSlider.value = 0f;
-        if (progressSlider.gameObject.activeSelf)
-            progressSlider.gameObject.SetActive(false);
+        Slider slider = currentCloged.progressSlider;
+        slider.value = 0f;
+        if (slider.gameObject.activeSelf)
+            slider.gameObject.SetActive(false);
     }
 }
