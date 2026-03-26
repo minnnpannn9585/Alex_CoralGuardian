@@ -9,6 +9,13 @@ public class GripKelp : MonoBehaviour
     Rigidbody2D targetRb;
     bool isGripping = false;
 
+    Animator anim;
+
+    private void Awake()
+    {
+        anim = GetComponentInChildren<Animator>();
+    }
+
     void Update()
     {
         // Only attempt grip behavior when we have a nearby kelp
@@ -39,6 +46,7 @@ public class GripKelp : MonoBehaviour
             targetRb.velocity = Vector2.zero;
         }
         isGripping = true;
+        anim.SetBool("isGrabbing", true);
     }
 
     void EndGrip()
@@ -48,6 +56,7 @@ public class GripKelp : MonoBehaviour
             targetRb.gravityScale = 0.1f;
         }
         isGripping = false;
+        anim.SetBool("isGrabbing", false);
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
