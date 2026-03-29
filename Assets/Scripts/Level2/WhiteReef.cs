@@ -2,30 +2,27 @@ using UnityEngine;
 
 public class WhiteReef : MonoBehaviour
 {
-    [Header("Colors")]
+    [Header("Sprites (override another object's SpriteRenderer)")]
+    [Tooltip("Target SpriteRenderer to change. If null, uses this GameObject's SpriteRenderer.")]
+    [SerializeField] private SpriteRenderer targetSpriteRenderer;
+
     [Tooltip("Sun hitting, No Water (Default/Bleached)")]
-    public Color bleachedColor = Color.gray;
-    
-    [Tooltip("Use this to map the old deadColor to bleachedColor in the inspector if needed, or update manually")]
-    public Color deadColor = Color.gray; // Keeping this temporarily to avoid losing inspector data or errors if referenced elsewhere, but logic will use bleachedColor. Wait, better to just use deadColor and rename the label or add new fields.
+    public Sprite bleachedSprite;
 
     [Tooltip("Sun Blocked, No Water (Shadowed)")]
-    public Color shadowedColor = new Color(0.8f, 0.8f, 0.8f); // Light gray
-    
+    public Sprite shadowedSprite;
+
     [Tooltip("Sun Blocked, Has Water (Alive)")]
-    public Color aliveColor = Color.white;
-    
+    public Sprite aliveSprite;
+
     [Tooltip("Sun hitting, Has Water (Thermal Shock/Dead)")]
-    public Color thermalShockColor = Color.red;
+    public Sprite thermalShockSprite;
 
     [Tooltip("Sun hitting, Has Water, Acclimated (Solved)")]
-    public Color solvedColor = Color.green;
+    public Sprite solvedSprite;
 
     [Header("Detection")]
     public string coldWaterTag = "ColdWater";
-
-    [Tooltip("SpriteRenderer to change color")]
-    [HideInInspector]public SpriteRenderer spriteRenderer;
 
     private bool isHitBySun = true; // Assume start in sun
     private bool isHitByColdWater;
@@ -35,12 +32,8 @@ public class WhiteReef : MonoBehaviour
 
     private void Start()
     {
-        if (spriteRenderer == null)
-            spriteRenderer = GetComponent<SpriteRenderer>();
-            
-        // Sync deadColor to bleachedColor if user set it previously
-        if (bleachedColor == Color.gray && deadColor != Color.gray)
-            bleachedColor = deadColor;
+        if (targetSpriteRenderer == null)
+            targetSpriteRenderer = GetComponent<SpriteRenderer>();
 
         UpdateVisuals();
     }
@@ -74,7 +67,8 @@ public class WhiteReef : MonoBehaviour
 
     private void UpdateVisuals()
     {
-        if (spriteRenderer == null) return;
+        if (targetSpriteRenderer == null)
+            return;
 
         // Logic for Acclimation: Only acclimate if in water AND shade
         if (!isHitBySun && isHitByColdWater)
@@ -89,6 +83,8 @@ public class WhiteReef : MonoBehaviour
 
         IsSolved = false;
 
+        Sprite nextSprite = null;
+
         if (isHitBySun)
         {
             if (isHitByColdWater)
@@ -96,19 +92,19 @@ public class WhiteReef : MonoBehaviour
                 if (isAcclimated)
                 {
                     // Sun + Water + Acclimated = Solved (Thriving)
-                    spriteRenderer.color = solvedColor;
+                    nextSprite = solvedSprite;
                     IsSolved = true;
                 }
                 else
                 {
                     // Sun + Water + Not Acclimated = Thermal Shock
-                    spriteRenderer.color = thermalShockColor;
+                    nextSprite = thermalShockSprite;
                 }
             }
             else
             {
                 // Sun + No Water = Bleached
-                spriteRenderer.color = bleachedColor;
+                nextSprite = bleachedSprite;
             }
         }
         else
@@ -116,13 +112,16 @@ public class WhiteReef : MonoBehaviour
             if (isHitByColdWater)
             {
                 // No Sun + Water = Alive / Acclimating
-                spriteRenderer.color = aliveColor;
+                nextSprite = aliveSprite;
             }
             else
             {
                 // No Sun + No Water = Shadowed
-                spriteRenderer.color = shadowedColor;
+                nextSprite = shadowedSprite;
             }
         }
+
+        if (nextSprite != null && targetSpriteRenderer.sprite != nextSprite)
+            targetSpriteRenderer.sprite = nextSprite;
     }
 }
